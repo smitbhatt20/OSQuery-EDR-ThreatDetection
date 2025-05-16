@@ -1,0 +1,72 @@
+Step 1: Install and Configure osquery
+Install osquery on your system.
+Create or edit the osquery configuration file (e.g., /etc/osquery/osquery.conf).
+
+Add your queries under the "schedule" section. Example:
+
+json
+{
+  "schedule": {
+    "users": {
+      "query": "SELECT * FROM users;",
+      "interval": 600
+    },
+    "listening_ports": {
+      "query": "SELECT * FROM listening_ports;",
+      "interval": 600
+    },
+    "startup_items": {
+      "query": "SELECT * FROM startup_items;",
+      "interval": 600
+    }
+  },
+  "options": {
+    "logger_plugin": "filesystem",
+    "logger_path": "/var/log/osquery",
+    "log_result_events": "true"
+  }
+}
+Save the config file.
+
+Step 2: Start or Restart osquery service
+Run the command to restart osquery and apply the new config:
+sudo systemctl restart osqueryd
+
+Confirm osquery is running:
+sudo systemctl status osqueryd
+
+Step 3: Configure Splunk to ingest osquery logs
+In Splunk Web, go to Settings > Data Inputs > Files & Directories.
+
+Add a new monitor input for the osquery log file path:
+
+/var/log/osquery/osqueryd.results.log
+Set the sourcetype to _json (to parse JSON logs).
+
+Assign the index as osquery or create a new index named osquery.
+
+Enable "Continuously Monitor".
+
+Step 4: Search and validate data in Splunk
+In Splunk search bar, run:
+
+SPL in Splunk Enterprise:
+index=osquery sourcetype=_json | head 10
+To view specific data, run:
+
+SPL in Splunk Enterprise:
+index=osquery sourcetype=_json name=listening_ports | table calendarTime, columns.port, columns.address, columns.pid
+For users data:
+
+Searh Processing Language in Splunk Enterprise:
+index=osquery sourcetype=_json name=users | table calendarTime, columns.username, columns.uid, columns.shell
+Step 5: Troubleshooting
+
+If no data shows for a query (e.g., users), verify osquery is collecting that info:
+grep '"name":"users"' /var/log/osquery/osqueryd.results.log
+
+If no output, run interactive osquery shell and test:
+osqueryi
+> SELECT * FROM users;
+Adjust your osquery config and restart the service accordingly.
+
