@@ -1,0 +1,40 @@
+Step-by-Step Execution
+Step 1: Create a Python Script to Spawn a Shell
+First, create a Python script that will spawn a shell when executed.
+nano spawn_shell.py
+
+Paste the following Python code:
+python
+import os
+os.system("/bin/bash")
+Save and exit using CTRL + O, ENTER, and CTRL + X.
+
+Step 2: Run the Python Script in Background
+Execute the script in the background to allow real-time monitoring:
+python3 spawn_shell.py &
+This command will execute the script, which spawns a bash process.
+
+Step 3: Run the Osquery to Detect the Behavior
+Now open osqueryi and execute the following SQL query to detect the child bash process spawned by the parent python3 process:
+
+sql
+
+SELECT 
+    child.pid, 
+    child.name AS child_name, 
+    child.cmdline AS child_cmdline,
+    parent.name AS parent_name, 
+    parent.cmdline AS parent_cmdline
+FROM processes AS child
+JOIN processes AS parent ON child.parent = parent.pid
+WHERE child.name IN ('bash', 'sh') 
+  AND parent.name = 'python3';
+If successful, the query will return a row showing the relationship between the child bash process and the parent python3 process.
+
+Optional: Keep Bash Alive Longer for Easier Detection
+If the shell exits too quickly to be captured, you can modify the script to keep the shell alive for 3 minutes using a sleep command:
+
+python
+import os
+os.system("/bin/bash -c 'sleep 180'")
+Save this modified version of the script and run it again. This gives you enough time to capture the process with osquery.
