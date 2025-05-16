@@ -1,0 +1,35 @@
+ Step 1: Detect Execution of Suspicious Scripts from /tmp Folder
+Purpose:
+Scripts or binaries run from /tmp are often a red flag in real-world attacks. This step simulates and detects execution of such potentially malicious behavior.
+
+What I Did:
+Created a malicious-looking script in /tmp/malicious.txt:
+#!/bin/bash
+echo "This is a malicious activity" > /dev/null
+sleep 180
+
+Saved and gave it execute permissions:
+chmod +x /tmp/malicious.txt
+
+Executed the script in one terminal:
+/tmp/malicious.txt
+
+Then opened osqueryi in a second terminal:
+sudo osqueryi
+
+Ran this query to detect processes running from /tmp:
+sql
+SELECT pid, name, cmdline, uid FROM processes WHERE cmdline LIKE '%/tmp/%';
+
+Output:
+This query lists all processes whose command line contains /tmp, showing the:
+PID
+Process name
+Command line
+User ID
+
+If a malicious script is running, it will appear in this table.
+
+Why This Matters:
+Attackers often drop binaries or scripts in /tmp because it's writable by all users. This detection helps in early identification of abnormal behavior and investigation.
+
