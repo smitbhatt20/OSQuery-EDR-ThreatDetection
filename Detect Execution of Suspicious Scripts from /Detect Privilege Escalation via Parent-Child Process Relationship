@@ -1,0 +1,33 @@
+What I Did:
+Created a script or command that simulates privilege escalation. For example, tried executing:
+sudo -u nobody /bin/bash -c "sudo -i"
+(Note: This may prompt for a password and might not escalate without proper sudoers configuration, so it's mostly for learning.)
+
+Alternatively, simulate it by running any elevated command from a normal user and observing process changes.
+
+Opened osqueryi in another terminal:
+sudo osqueryi
+Ran this query to detect if any process is running as root but was spawned by a non-root parent:
+sql
+->SELECT 
+  child.pid AS pid,
+  child.name AS process_name,
+  child.uid AS child_uid,
+  parent.pid AS parent_pid,
+  parent.name AS parent_name,
+  parent.uid AS parent_uid,
+  child.cmdline,
+  child.start_time
+FROM processes AS child
+JOIN processes AS parent ON child.ppid = parent.pid
+WHERE child.uid = 0 AND parent.uid != 0;
+
+Output:
+This query gives a table showing:
+PID of the child process
+Name and UID of both parent and child
+Command line and start time of child process
+If a process with UID 0 (root) was started by a process with UID not equal to 0, it is likely a case of privilege escalation.
+
+Why This Matters:
+This helps detect when a lower-privileged process gains elevated privileges. Such behavior is common in post-exploitation phases of attacks and is important to investigate in a SOC environment.
